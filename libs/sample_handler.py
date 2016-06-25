@@ -1,15 +1,16 @@
 #!/usr/bin/env python
 # -*- encoding: utf-8 -*-
 
-
 """
 from libs.base_handler import *
 import re
-from lxml import etree
 import requests
 import os
+import urllib
 
+# TODO，注意！开头的这三个函数是需要进行优化的部分。
 
+# 判断url的相似性
 def url_similarity(ori_url, my_url):
     ori_str_list1 = ori_url.split('//')
     ori_str_list2 = ori_str_list1[1].split('/')
@@ -45,7 +46,6 @@ def url_similarity(ori_url, my_url):
             if ori_list[i] != my_list[i]:
                 return False
 
-
     # 结尾相似度
     ori_end_page = ori_str_list2[len(ori_str_list2) - 1]
     my_end_page = my_str_list2[len(my_str_list2) - 1]
@@ -63,6 +63,7 @@ def url_similarity(ori_url, my_url):
 
     return True
 
+# 根据给出的详细页面得出需要抽取的字段的信息，存储到info字典里。
 def get_info(content, key, inspired_word, extract_content):
     key_index = content.index(inspired_word)
     value_index = content[key_index:].index(extract_content) + len(content[: key_index])
@@ -71,6 +72,7 @@ def get_info(content, key, inspired_word, extract_content):
     info[key] = (value_index - key_index, end_str, inspired_word)
     print info
 
+# 根据info字典里面的信息在其它详细页面里面抽取对应字段。
 def get_value(content, key):
     inspired_word = info[key][2]
     print inspired_word
@@ -87,7 +89,8 @@ def get_value(content, key):
     value = re.sub('&[^>]+;', '', value)
     value = value.strip()
     return value 
-    
+
+# 存储各个字段对应于详细页面信息的字典
 info = {}
 
 column_dict = '__COLUMN_DICT__'
@@ -97,6 +100,8 @@ index_url = '__BEGIN_URL__'
 host = index_url.split('//')[0] + '//' + index_url.split('//')[1].split('/')[0]
 
 class Handler(BaseHandler):
+
+    # 下面5行为在Handler这个类创建的时候，根据给出的详细页面获取到各个字段对应于详细页面的信息。
     detail_page_content = str(requests.get('__DETAIL_PAGE_URL__').content)
     for k, v in column_dict.iteritems():
         if v['inspired_word'] == '' or v['extract_content'] == '':
@@ -109,6 +114,7 @@ class Handler(BaseHandler):
     @every(minutes=24 * 60)
     def on_start(self):
         self.crawl('__BEGIN_URL__', callback=self.index_page)
+        # 打印出info字典便于观察
         print info
 
     @config(age=12 * 60 * 60)
@@ -117,38 +123,39 @@ class Handler(BaseHandler):
             url = each.attr.href
             if url[0: 1] == '/':
                 url += host
-            #抓取详细页面
+            # 根据url相似度抓取详细页面
             if url_similarity('__DETAIL_PAGE_URL__', url):
                 self.crawl(each.attr.href, callback=self.detail_page, save={'url': url})
 
-            #抓取下一个索引页面
+            # 根据url相似度抓取下一个索引页面
             if url_similarity('__NEXT_PAGE_URL__', url):
                 self.crawl(each.attr.href, callback=self.index_page)
 
     @config(priority=2)
     def detail_page(self, response): 
         content = response.content
+
+        # 存储详细页提取到的字段的字典
         output_dict = {}
 
-
+        # 遍历info字典获取对应页面的字段内容。
         for k in info:
             output_dict[k] = get_value(content, k)
 
-
+        # 下面10行的含义为，如果抽取到了项目编号就建立一个以项目编号命名的文件夹，否则返回。
         if output_dict['项目编号']:
             f_name = output_dict['项目编号']
         else:
             return
-
         if '/' in f_name:
             f_name = f_name.replace('/', '-')
-
         dir = '__SAVE_PATH__' + '/' + f_name
         if os.path.exists(dir):
            return
         os.mkdir(dir)
-        file_name = dir + '/' +  f_name + '.txt'
 
+        # 将抽取到的内容以Json形式存入一个以项目编号命名的txt文件里面。
+        file_name = dir + '/' + f_name + '.txt'
         output = open(file_name, 'w')
         try:
             output.write('{')
@@ -156,9 +163,15 @@ class Handler(BaseHandler):
                 s = '"' + k + '"' + ': ' + '"' + v + '", '
                 output.write(s)
             output.write('}')
-            # output.write(content)
         finally:
             output.close()
-            
+
+        # 如果存在附件下载地址就下载附件，但是这条语句的正确性有待验证。
+        if output_dict['附件下载地址']:
+            download_url = output_dict['附件下载地址']
+            zip_name = dir + '/' + f_name + '.zip'
+            urllib.urlretrieve(download_url, zip_name)
+
+        # 返回存储的字典便于在控制台观察。
         return output_dict
 """

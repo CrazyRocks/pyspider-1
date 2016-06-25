@@ -28,7 +28,7 @@ sys.setdefaultencoding("utf-8")
 
 
 '''
-我的第一个版本
+我们的第一个版本
 '''
 
 default_task = {
@@ -54,6 +54,9 @@ proj_info = {
 
 file_name = ''
 
+#########################################################################
+# 以下为第一部分的内容
+
 def get_my_script(begin_url, detail_page_url, next_page_url, save_path, column_dict):
     # print default_script
     return default_script.replace('__BEGIN_URL__', begin_url).\
@@ -63,6 +66,7 @@ def get_my_script(begin_url, detail_page_url, next_page_url, save_path, column_d
         replace('__COLUMN_DICT__', column_dict).\
         replace('"""', '')
 
+# 对应于新加的界面的函数
 @app.route('/debug/<project>', methods=['GET', 'POST'])
 def debug(project):
     global column_info, proj_info
@@ -85,24 +89,6 @@ def debug(project):
 
     info = projectdb.get(project, fields=['name', 'script'])
 
-    # print '>>>>>>>>>>>>>>>>>>>>'
-    # print url_for('static', filename='debug.js')
-    # print '>>>>>>>>>>>>>>>>>>>>'
-    #
-    # print '------------------------------'
-    # print info['script']
-    # print '------------------------------'
-
-    # if info:
-    #     begin_url =
-    #     detail_page_url =
-    #     next_page_url =
-    # else:
-    #     script = (default_script
-    #               .replace('__DATE__', datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
-    #               .replace('__PROJECT_NAME__', project)
-    #               .replace('__START_URL__', request.values.get('start-urls') or '__START_URL__'))
-
     begin_url = proj_info['begin_url']
     detail_page_url = proj_info['detail_page_url']
     next_page_url = proj_info['next_page_url']
@@ -118,8 +104,6 @@ def debug(project):
 
     default_task['project'] = project
 
-    # print 'task=' + str(task)
-
     columns = []
     for k, v in column_info.iteritems():
         if str(v['inspired_word']).strip() != '':
@@ -131,11 +115,10 @@ def debug(project):
                            save_path=save_path)
 
 
-@app.before_first_request
-def enable_projects_import():
-    sys.meta_path.append(ProjectFinder(app.config['projectdb']))
 
 
+
+# 在新加的页面保存脚本信息的函数
 @app.route('/debug/<project>/save', methods=['POST', ])
 def save(project):
     projectdb = app.config['projectdb']
@@ -199,6 +182,7 @@ def save(project):
     return 'ok', 200
 
 
+# 在新加的页面添加抽取字段到后台对应的函数
 @app.route('/debug/<project>/add', methods=['POST', ])
 def add(project):
     projectdb = app.config['projectdb']
@@ -217,28 +201,7 @@ def add(project):
     write_proj_info()
     return 'ok', 200
 
-@app.route('/debug/<project>/get')
-def get_script(project):
-    projectdb = app.config['projectdb']
-    if not projectdb.verify_project_name(project):
-        return 'project name is not allowed!', 400
-    info = projectdb.get(project, fields=['name', 'script'])
-    return json.dumps(utils.unicode_obj(info)), \
-        200, {'Content-Type': 'application/json'}
-
-
-@app.route('/helper.js')
-def resizer_js():
-    host = request.headers['Host']
-    return render_template("helper.js", host=host), 200, {'Content-Type': 'application/javascript'}
-
-
-@app.route('/helper.html')
-def resizer_html():
-    height = request.args.get('height')
-    script = request.args.get('script', '')
-    return render_template("helper.html", height=height, script=script)
-
+# 将字典写入到txt文件
 def write_proj_info():
     global proj_info
     if os.path.exists(file_name):
@@ -258,6 +221,7 @@ def write_proj_info():
     finally:
         my_output.close()
 
+# 将字典转换为字符串，以便保存到数据库和文本文件。
 def change_dict_to_str(my_dict):
     ss = '{'
     for k, v in my_dict.iteritems():
@@ -271,6 +235,7 @@ def change_dict_to_str(my_dict):
     ss += '}'
     return ss
 
+# 在字典中读取project对应的信息。
 def read_proj_info():
     global proj_info, column_info
     if not os.path.exists(file_name):
@@ -299,8 +264,38 @@ def read_proj_info():
     finally:
         my_input.close()
 
-#######################################################################
+# 以下的四个函数为pyspider自带的函数，未做更改。
+@app.before_first_request
+def enable_projects_import():
+    sys.meta_path.append(ProjectFinder(app.config['projectdb']))
 
+
+@app.route('/debug/<project>/get')
+def get_script(project):
+    projectdb = app.config['projectdb']
+    if not projectdb.verify_project_name(project):
+        return 'project name is not allowed!', 400
+    info = projectdb.get(project, fields=['name', 'script'])
+    return json.dumps(utils.unicode_obj(info)), \
+        200, {'Content-Type': 'application/json'}
+
+
+@app.route('/helper.js')
+def resizer_js():
+    host = request.headers['Host']
+    return render_template("helper.js", host=host), 200, {'Content-Type': 'application/javascript'}
+
+
+@app.route('/helper.html')
+def resizer_html():
+    height = request.args.get('height')
+    script = request.args.get('script', '')
+    return render_template("helper.html", height=height, script=script)
+
+
+##########################################################################################
+# 以下为第二部分的内容
+# 以下三个函数为pyspider自带的界面对应的函数。主要更改为将url更改对应不同的点击跳转。
 
 @app.route('/debug/<project>/debug', methods=['GET', 'POST'])
 def debug2(project):

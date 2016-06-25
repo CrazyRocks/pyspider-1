@@ -55,7 +55,7 @@ $(document).ready(function(){
 });
 
 
-
+//保存脚本到后台txt文件对应的函数
 var save_script = function(alert_s){
     var begin_url = $("input[name=begin-url]").val();
     var detail_page_url = $("input[name=detail-page-url]").val();
