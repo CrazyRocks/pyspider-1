@@ -133,15 +133,19 @@ class Handler(BaseHandler):
                 self.crawl(each.attr.href, callback=self.index_page, auto_recrawl=True)
 
     @config(priority=2)
-    def detail_page(self, response): 
+    def detail_page(self, response):
+        # 抽取招标内容
         content = response.content
         content_mark = '__CONTENT_MARK__'
         soup = BeautifulSoup(content, 'html.parser')
         content_mark = 'id = navSite'
         content_mark = content_mark.split('=')
         content = soup.find_all(attrs={content_mark[0].strip(): content_mark[1].strip()})
-        content = str(content[0])
-        content = content.replace('"', '\\\"')
+        if len(content) != 0:
+            content = str(content[0])
+            content = content.replace('"', '\\\"')
+        else:
+            content = ''
 
         # 存储详细页提取到的字段的字典
         output_dict = {
