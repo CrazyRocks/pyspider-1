@@ -3,6 +3,7 @@
 
 """
 from libs.base_handler import *
+from bs4 import BeautifulSoup
 import re
 import requests
 import os
@@ -117,7 +118,7 @@ class Handler(BaseHandler):
         # 打印出info字典便于观察
         print info
 
-    @config(age=12 * 60 * 60)
+    @config(age=1 * 60 * 60)
     def index_page(self, response):
         for each in response.doc('a[href^="http"]').items():
             url = each.attr.href
@@ -125,25 +126,35 @@ class Handler(BaseHandler):
                 url += host
             # 根据url相似度抓取详细页面
             if url_similarity('__DETAIL_PAGE_URL__', url):
-                self.crawl(each.attr.href, callback=self.detail_page, save={'url': url})
+                self.crawl(each.attr.href, callback=self.detail_page, auto_recrawl=True)
 
             # 根据url相似度抓取下一个索引页面
             if url_similarity('__NEXT_PAGE_URL__', url):
-                self.crawl(each.attr.href, callback=self.index_page)
+                self.crawl(each.attr.href, callback=self.index_page, auto_recrawl=True)
 
     @config(priority=2)
     def detail_page(self, response): 
         content = response.content
+        content_mark = '__CONTENT_MARK__'
+        soup = BeautifulSoup(content, 'html.parser')
+        content_mark = 'id = navSite'
+        content_mark = content_mark.split('=')
+        content = soup.find_all(attrs={content_mark[0].strip(): content_mark[1].strip()})
+        content = str(content[0])
+        content = content.replace('"', '\\\"')
 
         # 存储详细页提取到的字段的字典
-        output_dict = {}
+        output_dict = {
+            "url": response.url,
+            "content": content,
+        }
 
         # 遍历info字典获取对应页面的字段内容。
         for k in info:
             output_dict[k] = get_value(content, k)
 
         # 下面10行的含义为，如果抽取到了项目编号就建立一个以项目编号命名的文件夹，否则返回。
-        if output_dict['项目编号']:
+        if '项目编号' in output_dict and output_dict['项目编号'] != '':
             f_name = output_dict['项目编号']
         else:
             return
@@ -167,8 +178,10 @@ class Handler(BaseHandler):
             output.close()
 
         # 如果存在附件下载地址就下载附件，但是这条语句的正确性有待验证。
-        if output_dict['附件下载地址']:
+        if '附件下载地址' in output_dict and output_dict['附件下载地址'] != '':
             download_url = output_dict['附件下载地址']
+            if download_url[0] == '/':
+                download_url = host + download_url
             zip_name = dir + '/' + f_name + '.zip'
             urllib.urlretrieve(download_url, zip_name)
 

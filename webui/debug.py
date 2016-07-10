@@ -49,6 +49,7 @@ proj_info = {
     u'detail_page_url': '',
     u'next_page_url': '',
     u'save_path': '',
+    u'content_mark': '',
     u'column_info': column_info
 }
 
@@ -57,13 +58,14 @@ file_name = ''
 #########################################################################
 # 以下为第一部分的内容
 
-def get_my_script(begin_url, detail_page_url, next_page_url, save_path, column_dict):
+def get_my_script(begin_url, detail_page_url, next_page_url, save_path, content_mark, column_dict):
     # print default_script
     return default_script.replace('__BEGIN_URL__', begin_url).\
         replace('__DETAIL_PAGE_URL__', detail_page_url).\
         replace('__NEXT_PAGE_URL__', next_page_url).\
         replace('__SAVE_PATH__', save_path).\
         replace('__COLUMN_DICT__', column_dict).\
+        replace('__CONTENT_MARK__', content_mark).\
         replace('"""', '')
 
 # 对应于新加的界面的函数
@@ -77,6 +79,7 @@ def debug(project):
         u'detail_page_url': '',
         u'next_page_url': '',
         u'save_path': '',
+        u'content_mark': '',
         u'column_info': column_info
     }
     projectdb = app.config['projectdb']
@@ -93,6 +96,7 @@ def debug(project):
     detail_page_url = proj_info['detail_page_url']
     next_page_url = proj_info['next_page_url']
     save_path = proj_info['save_path']
+    content_mark = proj_info['content_mark']
 
     taskid = request.args.get('taskid')
     if taskid:
@@ -112,7 +116,7 @@ def debug(project):
 
     return render_template("debug2.html", begin_url=begin_url.decode('utf8'), detail_page_url=detail_page_url.decode('utf8'),
                            next_page_url=next_page_url.decode('utf8'), project_name=project.decode('utf8'), columns=columns,
-                           save_path=save_path)
+                           save_path=save_path, content_mark=content_mark)
 
 
 
@@ -128,13 +132,15 @@ def save(project):
     detail_page_url = request.form['detailPageUrl']
     next_page_url = request.form['nextPageUrl']
     save_path = request.form['savePath']
+    content_mark = request.form['contentMark']
 
     print '================'
     print \
         begin_url, \
         detail_page_url, \
         next_page_url,\
-        save_path
+        save_path,\
+        content_mark
     print '================'
 
     proj_info['begin_url'] = begin_url
@@ -142,11 +148,12 @@ def save(project):
     proj_info['next_page_url'] = next_page_url
     proj_info['column_info'] = column_info
     proj_info['save_path'] = save_path
+    proj_info['content_mark'] = content_mark
 
     # print column_info
     write_proj_info()
 
-    script = get_my_script(begin_url, detail_page_url, next_page_url, save_path, change_dict_to_str(column_info))
+    script = get_my_script(begin_url, detail_page_url, next_page_url, save_path, content_mark, change_dict_to_str(column_info))
     print script
 
     project_info = projectdb.get(project, fields=['name', 'status', 'group'])
@@ -259,6 +266,7 @@ def read_proj_info():
             u'detail_page_url': u'',
             u'next_page_url': u'',
             u'save_path': u'',
+            u'content_mark': u'',
             u'column_info': column_info
         }
     finally:

@@ -61,6 +61,7 @@ var save_script = function(alert_s){
     var detail_page_url = $("input[name=detail-page-url]").val();
     var next_page_url = $("input[name=next-page-url]").val();
     var save_path = $("input[name=save-path]").val();
+    var content_mark = $("input[name=content-mark]").val();
     $.ajax({
       type: "POST",
       url: location.pathname+'/save',
@@ -68,7 +69,8 @@ var save_script = function(alert_s){
         beginUrl: begin_url,
         detailPageUrl: detail_page_url,
         nextPageUrl: next_page_url,
-        savePath: save_path
+        savePath: save_path,
+        contentMark: content_mark
       },
       success: function(data) {
         alert(alert_s);
