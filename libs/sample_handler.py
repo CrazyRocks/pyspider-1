@@ -138,19 +138,18 @@ class Handler(BaseHandler):
         content = response.content
         content_mark = '__CONTENT_MARK__'
         soup = BeautifulSoup(content, 'html.parser')
-        content_mark = 'id = navSite'
         content_mark = content_mark.split('=')
-        content = soup.find_all(attrs={content_mark[0].strip(): content_mark[1].strip()})
-        if len(content) != 0:
-            content = str(content[0])
-            content = content.replace('"', '\\\"')
+        content1 = soup.find_all(attrs={content_mark[0].strip(): content_mark[1].strip()})
+        if len(content1) != 0:
+            content1 = str(content1[0])
+            content1 = content1.replace('"', '\\\"')
         else:
-            content = ''
+            content1 = ''
 
         # 存储详细页提取到的字段的字典
         output_dict = {
             "url": response.url,
-            "content": content,
+            "content": content1,
         }
 
         # 遍历info字典获取对应页面的字段内容。
