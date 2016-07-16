@@ -181,11 +181,49 @@ class Handler(BaseHandler):
             output.close()
 
         # 如果存在附件下载地址就下载附件，但是这条语句的正确性有待验证。
-        if '附件下载地址' in output_dict and output_dict['附件下载地址'] != '':
-            download_url = output_dict['附件下载地址']
+        if '附件下载地址1' in output_dict and output_dict['附件下载地址1'] != '':
+            download_url = output_dict['附件下载地址1']
             if download_url[0] == '/':
                 download_url = host + download_url
-            zip_name = dir + '/' + f_name + '.zip'
+            f_list = download_url.split('.')
+            format = f_list[len(f_list) - 1]
+            zip_name = dir + '/' + '附件1' + '.' + format
+            urllib.urlretrieve(download_url, zip_name)
+
+        if '附件下载地址2' in output_dict and output_dict['附件下载地址2'] != '':
+            download_url = output_dict['附件下载地址2']
+            if download_url[0] == '/':
+                download_url = host + download_url
+            f_list = download_url.split('.')
+            format = f_list[len(f_list) - 1]
+            zip_name = dir + '/' + '附件2' + '.' + format
+            urllib.urlretrieve(download_url, zip_name)
+
+        if '附件下载地址3' in output_dict and output_dict['附件下载地址3'] != '':
+            download_url = output_dict['附件下载地址3']
+            if download_url[0] == '/':
+                download_url = host + download_url
+            f_list = download_url.split('.')
+            format = f_list[len(f_list) - 1]
+            zip_name = dir + '/' + '附件3' + '.' + format
+            urllib.urlretrieve(download_url, zip_name)
+
+        if '附件下载地址4' in output_dict and output_dict['附件下载地址4'] != '':
+            download_url = output_dict['附件下载地址4']
+            if download_url[0] == '/':
+                download_url = host + download_url
+            f_list = download_url.split('.')
+            format = f_list[len(f_list) - 1]
+            zip_name = dir + '/' + '附件4' + '.' + format
+            urllib.urlretrieve(download_url, zip_name)
+
+        if '附件下载地址5' in output_dict and output_dict['附件下载地址5'] != '':
+            download_url = output_dict['附件下载地址5']
+            if download_url[0] == '/':
+                download_url = host + download_url
+            f_list = download_url.split('.')
+            format = f_list[len(f_list) - 1]
+            zip_name = dir + '/' + '附件5' + '.' + format
             urllib.urlretrieve(download_url, zip_name)
 
         # 返回存储的字典便于在控制台观察。
